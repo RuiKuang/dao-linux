@@ -1,0 +1,20 @@
+#!/usr/local/bin/c-inside
+
+/* errno.ci - demonstrate the $errno built-in command */
+
+printf("--- first, try reading 0 bytes to a NULL pointer from file descriptor 99\n");
+ret = read(99, 0, 0);
+my_errno = $errno;
+printf("(it had returned %d with errno %d)\n", ret, my_errno);
+
+printf("\n--- try reading 0 bytes to a NULL pointer from file descriptor 0\n");
+ret = read(0, 0, 0);
+my_errno = $errno;
+printf("(it had returned %d with errno %d)\n", ret, my_errno);
+
+printf("\n--- try reading 4 bytes to a NULL pointer from file descriptor 0 (press Enter)\n");
+ret = read(0, 0, 4);
+my_errno = $errno;
+printf("(it had returned %d with errno %d)\n", ret, my_errno);
+
+printf("\n--- done!\n");

@@ -1,0 +1,12 @@
+APP = c-inside
+CFLAGS += -Wall -pedantic -I../include -I..
+# -DHAVE_LIBDL -DHAVE_READLINE
+LDLIBS = -ldl
+
+nolib:
+	make -C ../libc-inside -f makefile-dev nolib
+	gcc -o $(APP) $(APP).c ../libc-inside/*.o $(CFLAGS) $(LDLIBS)
+
+clean:
+	-make -C ../libc-inside -f makefile-dev clean
+	$(RM) $(APP) *.o

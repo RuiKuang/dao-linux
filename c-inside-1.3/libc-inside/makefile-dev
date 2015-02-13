@@ -1,0 +1,47 @@
+# C-Inside (libc-inside) - C language interpreter library
+# Copyright (C) 2008-2015  Jason Todd <jtodd1@earthlink.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# makefile-dev - Makefile, ONLY to be used to assist development of libc-inside
+
+OBJS = c-inside.o parse.o expr.o operator.o keyword.o namespace.o list.o \
+        efault.o builtin.o system.o iterators.o
+CFLAGS += -Wall -pedantic -I../include -I.. -Wno-variadic-macros -O2 \
+        -fno-strict-aliasing
+
+# Try also:
+#   CFLAGS="-O2 -fno-strict-aliasing" make -f makefile-dev warnme
+
+LICENSE_FILE = ../COPYING
+
+nolib: $(OBJS)
+
+# check for all warnings in the source files
+warnme: $(OBJS)
+	$(RM) $(OBJS)
+
+clean:
+	$(RM) $(OBJS)
+
+$(C_OBJS): %.o: %.c
+
+# generate a new license.h, using srec_cat, if the license file (COPYING) is
+# ever updated or changed
+license.h: $(LICENSE_FILE)
+	@if [ ! -f $(LICENSE_FILE) ]; then echo "License file $(LICENSE_FILE) not found."; exit 1; fi
+	@if [ "`grep -B 1 '^  [0-9]\{1,\}\. ' $(LICENSE_FILE)`" != "`grep -B 1 '^  [0-9]\{1,\}\. ' $(LICENSE_FILE) | grep -A 1 '^$$'`" ]; then echo "License file $(LICENSE_FILE) does not match the required layout (see builtin.c)."; exit 1; fi
+	srec_cat $< -Binary -Output $@ -C-Array _cinside_license
+	@echo "Be sure to update the appropriate section numbers in"
+	@echo "_cinside_builtin_license()."
