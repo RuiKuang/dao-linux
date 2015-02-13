@@ -1,0 +1,20 @@
+#!/usr/local/bin/c-inside
+
+/* timing.ci - demonstrate timing of functions */
+
+printf("--- timing a printf\n");
+$time printf("Hello!\n");
+
+printf("\n--- timing a strlen within a printf\n");
+$time printf("Length of 'hello' is %d\n", strlen("hello"));
+
+printf("\n--- timing a 2-second sleep\n");
+$time sleep(2);
+
+printf("\n--- timing a printf with some sleeps\n");
+$time printf("sleep(3) returned %d, sleep(1) returned %d\n", sleep(3), sleep(1));
+
+printf("\n--- timing a read from stdin (press Enter to continue)\n");
+$time read(0, malloc(16), 16);
+
+printf("\n--- done!\n");

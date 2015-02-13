@@ -1,0 +1,67 @@
+This is the README file for C-Inside 1.3.
+C-Inside is Copyright (C) 2008-2015 Jason Todd <jtodd1@earthlink.net>
+
+
+Brief Description
+C-Inside is a feature-rich run-time interpreter of the C programming language.
+Statements can include complex expressions and arbitrary function calls.  The
+included library, libc-inside, has a powerful, yet extremely easy to use API.
+
+
+Important
+Currently, C-Inside only supports 32-bit x86 systems running Linux.  Support
+for other architectures and platforms will be made available (or restored, in
+the case of 32-bit PowerPC and OS X) in future versions.
+
+
+Installation
+Refer to the INSTALL file for installation instructions.  In short, C-Inside
+can be built and installed with the usual basic sequence:
+
+    tar xzf c-inside-1.3.tar.gz
+    cd c-inside-1.3/
+    ./configure
+    make
+    su
+    make install
+
+After C-Inside is installed, the documentation can be read in the form of
+online manual pages.  Run "man c-inside" for information on the simple front-
+end application and the implemented language.  Run "man 3 c-inside" for
+documentation on using the libc-inside library.  An alias manual page is
+provided for each library function (for example, "man cinside_eval" will
+display the c-inside(3) manual page).
+
+
+Detailed Description
+C-Inside is, at the simplest level, a run-time C interpreter.  It is
+implemented as a library, allowing its functionality to be accessed from within
+any C application.  The API is very simple yet powerful.  Invoking its
+functionality can be as simple as including the c-inside.h header file, adding
+the line "cinside_simple()" (no arguments), and linking with -lc-inside.  Or,
+individual expressions can be evaulated via cinside_eval().
+
+C-Inside has additional features, many of which can prove quite useful to C
+developers and instructors, and those simply curious about certain functions
+or details of the language.  Individual functions can be tightly timed.  For
+instance, printf("%d", strlen("Hello")) will show how long strlen() took, and
+how long printf() took (independent of strlen(), since it only provided a value
+for one of the arguments to printf).
+
+Hex-dumping of memory, modification of memory, and rudimentary identification
+of memory regions or symbols is provided.  Inaccessible areas, and encounters
+with inaccessible areas within function calls, are reported as such (rather
+than allowing a crash to result).
+
+Support for the "errno" facility is provided, so the user can easily examine
+its value and corresponding message text.  The readline library is employed,
+where available, for a more user-friendly experience in interactive mode.
+Scripting support is also available, for those who might find it useful.
+
+While C-Inside is primarily a library (libc-inside), the package includes a
+simple front-end utility, c-inside, for exercising its capabilities.  This
+utility is great for instructional purposes.  Those learning the language can
+see immediate results of each newly learned expression and function, and can
+very quickly try things in different ways.  It is also an excellent tool to aid
+in exploring the internals of how Unix processes work, and how the operating
+system handles various requests.

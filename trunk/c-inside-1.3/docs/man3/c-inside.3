@@ -1,0 +1,356 @@
+.\" AUTHOR: Jason Todd
+.\" Copyright (C) 2008-2015 Jason Todd <jtodd1@earthlink.net>
+.\"
+.\" This is free documentation; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License as
+.\" published by the Free Software Foundation; either version 3 of
+.\" the License, or (at your option) any later version.
+.\"
+.\" The GNU General Public License's references to "object code"
+.\" and "executables" are to be interpreted as the output of any
+.\" document formatting or typesetting system, including
+.\" intermediate and printed output.
+.\"
+.\" This manual is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public
+.\" License along with this manual; if not, write to the Free
+.\" Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111,
+.\" USA.
+.TH C-INSIDE 3 "2015-02-11" "C-Inside 1.3"
+.SH NAME
+cinside_init, cinside_destroy, cinside_eval, cinside_get, cinside_set, cinside_go, cinside_simple \- libc-inside C interpreter API
+.SH SYNOPSIS
+.B #include <c-inside.h>
+.sp
+.BI "int cinside_init(cinside_info **" info ", cinside_variable *" preload_vars ", cinside_function *" preload_functions ", size_t " max_vars ", size_t " max_functions ");"
+.sp
+.BI "int cinside_destroy(cinside_info *" info ");"
+.sp
+.BI "int cinside_eval(cinside_info *" info ", char *" code_buf ", uint32_t *" result ");"
+.sp
+.BI "int cinside_get(cinside_info *" info ", size_t " id ", uint32_t *" value ");"
+.sp
+.BI "int cinside_set(cinside_info *" info ", size_t " id ", uint32_t " value ");"
+.sp
+.BI "int cinside_go(cinside_variable *" preload_vars ", cinside_function *" preload_functions ", size_t " max_vars ", size_t " max_functions ");"
+.sp
+.BI "int cinside_loop(cinside_info *" info ", char *" prompt ");"
+.sp
+.BI "#define cinside_simple() cinside_go(NULL, NULL, 0, 0)"
+.sp
+Link with
+.IR \-lc-inside .
+.SH COPYRIGHT
+C-Inside and libc-inside are Copyright (C) 2008-2015 Jason Todd.  Send bug reports
+and suggestions/patches/etc. to
+.IR jtodd1@earthlink.net .
+.SH DESCRIPTION
+The C-Inside package is an interpreter for the C programming language.  It
+consists primarily of the libc-inside library, documented in this manual page.
+.PP
+Use of the library can be as simple and non-intrusive as:
+.sp
+.B #include <c-inside.h>
+.PP
+.B "..."
+.PP
+.BI cinside_simple();
+.sp
+or it can involve the more advanced features provided by the functions listed
+above.
+.PP
+When using the library, it is important to treat the
+.B cinside_info
+structure as an opaque type.  To that end, most of the functions exist to set
+up and manage this structure.
+.PP
+On the other hand, the
+.BR cinside_variable " and " cinside_function
+structures are available for use in initialization.  While they may be extended
+in the future, these structures currently have the following definitions in
+.IR <c-inside.h> :
+.sp
+.in +4n
+.nf
+typedef struct _cinside_variable
+{
+    char *name;
+    uint32_t *addr;
+    uint32_t local_value;
+    size_t list_items;
+} cinside_variable;
+
+typedef struct _cinside_function
+{
+    char *name;
+    cinside_fp addr;
+} cinside_function;
+.fi
+.in
+.sp
+The
+.I name
+field in each structure identifies the name of the item.
+.PP
+The
+.I addr
+field in each structure contains the address of the item in memory.
+.PP
+For variables, the
+.I local_value
+field contains the value of the variable, if the variable is not an existing
+global variable and is not a list (see
+.I list_items
+below).  In this case,
+.I addr
+points to
+.I local_value
+.RI ( addr " ="
+.RI & local_value ).
+.PP
+Furthermore, in the case of non-global variables, the
+.I list_items
+field indicates, when non-zero, that the variable is a list (essentially an
+array).  The value of this field indicates how many values are in the list.
+.PP
+Variables and functions will be searched for in the system's (and
+application's) namespace, if the appropriate facilities are available.
+However, they can also be pre-defined for initialization.  To do so, provide
+.BR cinside_init ()
+with existing, initialized arrays of type
+.BR cinside_variable " and " cinside_function .
+Terminate each array with an entry containing a NULL
+.IR name .
+.PP
+.BR cinside_init ()
+allocates and initializes a
+.B cinside_info
+structure, and stores the address in
+.IR info .
+If
+.I preload_vars
+is not NULL, the specified variables are copied into the structure.
+Correspondingly, the specified functions are copied if
+.I preload_functions
+is not NULL.  If
+.IR max_vars " or " max_functions
+is non-zero, the specified value is used to limit the total number of variables
+(and functions, respecitvely) that can be defined in the libc-inside
+environment.  If zero is specified in either case, a default limit is used.
+.PP
+.BR cinside_destroy ()
+de-initializes the
+.I info
+structure, releasing all used resources, and freeing the structure itself.
+.BR cinside_init ()
+must be called again in order to use any of these functions.
+.PP
+.BR cinside_eval ()
+executes the C statement(s) given in
+.IR code_buf .
+If
+.I result
+is not NULL and the evaluation is successful, the result of the evaluation is
+stored at the supplied address.  Note, the result of the statements and the
+return value of
+.BR cinside_eval ()
+are independent of each other (see
+.BR "RETURN VALUE" ,
+below).
+.PP
+.BR cinside_get ()
+retrieves, into
+.IR value ,
+the value of the configuration or status item specified in
+.IR id .
+Refer to
+.I <c-inside.h>
+for information on the
+.BR CINSIDE_ID_ ...
+values.
+.PP
+.BR cinside_set ()
+sets the value of the configuration item specified in
+.I id
+to
+.IR value .
+.RB "For " CINSIDE_ID_OUTPUT_FUNC " and " CINSIDE_ID_ERROR_FUNC ,
+the prototype for the functions is as follows:
+.sp
+.in +4n
+.nf
+int func(char *str);
+.fi
+.in
+.sp
+.RB "For " CINSIDE_ID_GETDATA_FUNC " and " CINSIDE_ID_PUTDATA_FUNC ,
+the prototype for the functions is as follows:
+.sp
+.in +4n
+.nf
+size_t func(uint8_t *local_addr, uint32_t remote_addr, size_t n);
+.fi
+.in
+.sp
+.RB "For " CINSIDE_ID_SETBP_FUNC ,
+the prototype for the function is as follows:
+.sp
+.in +4n
+.nf
+int func(uint32_t addr, char *expr);
+.fi
+.in
+.sp
+.RB "Finally, for " CINSIDE_ID_DISASM_FUNC ,
+the prototype for the function is as follows:
+.sp
+.in +4n
+.nf
+int func(uint32_t addr, uint32_t lines);
+.fi
+.in
+.sp
+The given functions must return one of the libc-inside return values listed in
+.BR "RETURN VALUE" ,
+below.  If
+.B CINSIDE_ID_OUTPUT_FUNC
+is never set, or is set to NULL, the following built-in commands will have
+little or no effect:
+.BR $dump ", " $help ", " $license ", " $show ", " $time ", and " $version .
+.PP
+.BR cinside_go ()
+provides a simple interactive interface to the libc-inside functionality.  No
+.B cinside_info
+structure is needed when calling this function, as it manages an internal
+instance.
+.BR cinside_go ()
+sets the text output function and the error output function to basic
+.BR printf ()-based
+handlers, and starts an interactive command loop, using
+.RI ' "; " '
+as the prompt.  The
+.B readline
+library is used, if available, for input.  Refer to
+.BR cinside_init (),
+above, for details on the
+.IR preload_vars ", " preload_functions ", " max_vars ", and " max_functions
+parameters.
+.PP
+.PP
+.BR cinside_loop ()
+provides a more flexible interactive interface to the libc-inside
+functionality than that offered by
+.BR cinside_go "()."
+.IR info " must already be initialized and configured.  The interactive
+.RI "command loop uses " prompt " as the prompt.  As with"
+.BR cinside_go "(), "
+the
+.B readline
+library is used, if available, for input.
+.PP
+.BR cinside_simple (),
+defined as a macro (see
+.BR SYNOPSIS ,
+above), is the least intrusive use of libc-inside.  As shown in the
+macro definition,
+.BR cinside_simple ()
+results in an invocation of
+.BR cinside_go ()
+with no pre-defined variables or functions, and no specified limits on the
+number of variables or functions.
+.SH RETURN VALUE
+All libc-inside functions documented here return one of the following values.
+Note, these return values are completely independent of any values returned
+from arbitrary functions that are executed within evaluated C expressions.
+.TP
+.B CINSIDE_SUCCESS
+The function completed successfully.
+.TP
+.B CINSIDE_SUCCESS_EXIT
+The built-in command
+.B $exit
+was issued in
+.BR cinside_go "() or " cinside_loop ()
+or was supplied to
+.BR cinside_eval ().
+.TP
+.B CINSIDE_SUCCESS_CONT
+The
+.B $go
+built-in command was issued in
+.BR cinside_go "() or " cinside_loop ().
+.TP
+.B CINSIDE_NOP
+The statement(s) provided in
+.I code_buf
+to
+.BR cinside_eval ()
+completed successfully, but yielded no result in
+.IR result .
+.TP
+.B CINSIDE_PARTIAL
+A partial statement was provided in
+.I code_buf
+to
+.BR cinside_eval (),
+and as a result, was not yet evaluated.  However, if other statements preceded
+the partial statement, they were successfully evaluted.  Additional code text
+passed to subsequent calls to
+.BR cinside_eval ()
+will need to contain the remainder of the partial statement.
+.TP
+.B CINSIDE_ERR_PARAMETER
+One or more parameters passed to a libc-inside function is invalid.  For
+instance, if the
+.B cinside_info
+structure has not been initialized, the functions will return this value.
+.TP
+.B CINSIDE_ERR_GENERAL
+A general, low-level has occurred.  This typically indicates a bug or other
+unexpected result within the libc-inside library.
+.TP
+.B CINSIDE_ERR_SYNTAX
+The statement(s) issued in
+.BR cinside_go ()
+or supplied to
+.BR cinside_eval ()
+have one or more errors in syntax.
+.TP
+.B CINSIDE_ERR_RESOURCES
+There were insufficient resources (typically, memory) to complete the function.
+.TP
+.B CINSIDE_ERR_NOT_FOUND
+The requested item was not found.  For instance, if a non-existant variable is
+referred to in an expression, this value is returned.
+.TP
+.B CINSIDE_ERR_FULL
+One or more resources internal to libc-inside is full.  Internal resources
+include variable storage, function cache, and list storage.
+.TP
+.B CINSIDE_ERR_CANNOT
+The requested operation is not permitted.  Examples include: attempting the
+.B $load
+built-in command when system namespace facilities are not available; failed
+dependencies on system pointer sizes; attempting an invalid memory access
+within an expression; or attempted use of an unsupported language keyword.
+.SH NOTES
+For information on the language features, built-in commands, and other features
+supported by libc-inside, refer to the
+.BR c-inside (1)
+manual page.
+.SH BUGS
+There are currently no known bugs in libc-inside.  However, there are certain
+limitations, including lack of support for architectures other than 32-bit x86
+and other platforms than Linux.  There are some quite useful C language
+features that are not yet supported, but will be in future releases.
+.PP
+Among the features not currently supported is that of signed data types.  As a
+result, all comparisons such as (a >= 0) will always evaluate to true, and all
+comparisons such as (a < 0) will always evaluate to false.  This will be fixed
+when support for explicit data types is added to libc-inside.
+.SH SEE ALSO
+.BR c-inside (1)

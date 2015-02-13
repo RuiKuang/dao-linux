@@ -1,0 +1,25 @@
+#!/usr/local/bin/c-inside
+
+/* ls.ci - simple version of the "ls" command (usage: ls [FILE]...) */
+
+start = 1;
+if (argc == 1)
+    start = 0;
+
+ret = 0;
+for (i = start; i < argc; i++)
+{
+    file = $files ((start == 1) ? argv[i] : "*");
+    if (($count file) == 0)     /* built-in commands have highest precedence */
+    {
+        printf("%s: %s: No such file or directory\n", argv[0], argv[i]);
+        ret = 2;
+    }
+
+    for (; !$last file; $next file)
+        printf("%s\n", file);
+
+    if (start == 0) break;
+}
+
+exit(ret);

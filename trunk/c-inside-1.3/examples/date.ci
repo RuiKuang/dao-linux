@@ -1,0 +1,11 @@
+#!/usr/local/bin/c-inside
+
+/* date.ci - display the current time and date */
+
+tv = {0, 0};
+gettimeofday(tv, 0);
+ltm = localtime(&tv[0]);
+tm_str = malloc(100);
+strftime(tm_str, 100, "%c", ltm);
+printf("%s\n", tm_str);
+free(tm_str);

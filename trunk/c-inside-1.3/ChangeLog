@@ -1,0 +1,166 @@
+2015/02/11: C-Inside 1.3
+    - Added "controller mode" for controlling or otherwise managing other code
+      via libc-inside, suitable for use in debuggers.
+        - new configuration items CINSIDE_ID_ENABLE_CTRLR,
+          CINSIDE_ID_GETDATA_FUNC, CINSIDE_ID_PUTDATA_FUNC,
+          CINSIDE_ID_SETBP_FUNC, and CINSIDE_ID_DISASM_FUNC
+        - new built-in commands $bp, $disasm, and $go
+        - new return value CINSIDE_SUCCESS_CONT
+
+    - Added new function cinside_loop(), similar to but more flexible than
+      cinside_go().
+
+    - Added informative output (help, license) to c-inside interactive
+      invocation.
+
+    - Moved 32-bit x86 inline assembly from _cinside_caller() into
+      _cinside_caller_inner() in new file caller.s.
+
+    - Note: currently, only 32-bit Linux/x86 systems are supported.
+        - Support for other architectures and operating systems will be added
+          (or readded) in future releases.
+
+
+2009/01/02: C-Inside 1.2
+
+    - Added support for the following language features:
+        - statement blocks
+        - conditional construct: if and else
+        - loop constructs: for, while, do, break, continue
+        - comma operator (note, this has nothing to do with separation of
+          function parameters or list elements)
+
+    - Added support for argc, argv, and envp.
+        - This makes scripts immensely more useful!
+
+    - Buffers passed to cinside_eval() no longer need to contain complete
+      statements.
+        - Added new return value, CINSIDE_PARTIAL, to indicate partial
+          statements (subsequent calls may complete them).
+
+    - Added seven new built-in commands:
+        - $get (get value of configuration item)
+        - $set (set configuration item)
+        - $files (create a file name iterator for supplied file specifications)
+        - $words (create a word iterator from the given string)
+        - $count (count the total number of items in an iterator)
+        - $next (advance an iterator to the next item)
+        - $last (check if the iterator is empty)
+
+    - Added the optional "quiet" keyword to the $errno built-in command, to
+      suppress the associated message.
+        - $errno can now be used within scripts, with no output clutter.
+
+    - Added two new configuration items:
+        - CINSIDE_ID_INPUT_DONE (specifies end-of-input)
+        - CINSIDE_ID_ADD_SEMI (automatically add ; to each code buffer passed
+          to cinside_eval())
+
+    - Changed $mod built-in command to return the original value.
+
+    - Fixed a bug where the right hand expression in a binary operator,
+      assignment operator, or ternary conditional operator could be empty.
+
+    - Reworked parameter handling for built-in commands to support all possible
+      variants of expected parameters and to greatly simplify the code.
+
+    - Reworked handling of escape character sequences to improve support and to
+      now include all sequences supported in C.
+
+    - Reworked handling of all strings (string literals, namespace words,
+      keywords, etc.) to correctly allow multiple references.
+
+    - Added two new example scripts:
+        - mksock.ci (create a Unix socket file, like the "mksock" utility)
+        - ls.ci (simple version of the "ls" command)
+
+    - Added display of line numbers when errors are encountered in scripts.
+
+    - Made all example scripts executable, with interpreter
+      /usr/local/bin/c-inside.
+        - They can still be run manually, via "c-inside <file>".
+
+    - Fixed accidental use of "-s" instead of "-e" option to sed in
+      examples/results.sh.
+        - The script worked with GNU sed, but not BSD sed.
+
+    - Removed use of "stderr" from example scripts, as it is not in the
+      namespace on Mac OS X.
+
+    - Changed cinside_init() to take the address of a pointer to a cinside_info
+      structure, so cinside_init() now allocates the space for the structure.
+        - cinside_destroy() now frees the cinside_info structure.
+
+    - Reworked processing of results in expression evaluation, to a simpler,
+      more natural scheme.
+        - Now, an expression's tokens are replaced with the result upon
+          completion.
+        - Internal functions no longer need to pass a pointer to the result
+          (and subsequently always check if it is non-NULL).
+        - As a result, the undocumented special command "@" was removed.
+
+    - Added two new source files:
+        - libc-inside/keyword.c (parsing and evaluation of language keywords)
+        - libc-inside/iterators.c (functions to iterate on filenames and words)
+
+    - Reworked much of the expression parsing logic to improve correctness and
+      efficiency.
+        - For instance, paired ()/{}/[] now store the relative index of their
+          corresponding token to greatly improve efficiency.
+
+    - Minor bug fixes.
+
+    - Appropriate documentation updates and changes.
+
+
+2008/11/07: C-Inside 1.1
+
+    - Added support for Mac OS X on IA-32 (Intel) systems.
+        - As a result, _cinside_caller() is *much* improved over version 1.0.
+          The algorithm now adheres fully to the Mac OS X IA-32 ABI.
+        - An additional side effect is that the assembly code now interfaces
+          much better with the compiler.
+
+    - Added partial support for 32-bit PowerPC systems running Linux and
+      Mac OS X.
+
+    - Added detection of CPU type and OS in the configure script, to support
+      the above two additions.
+
+    - Added support for multiple commands separated by semicolons.
+        - Increases usefulness with regard to shell scripting via the "-c"
+          command line option to the c-inside utility.
+
+    - Removed the direct dependency on readline, so applications that use
+      libc-inside no longer need to link with readline.
+        - This involved reworking cinside_go() to link with readline via the
+          libdl functionality, which makes sense to do, since libdl is already
+          being used (if available).
+
+    - Added new cinside_get() and cinside_set() functions to get/set
+      configuration and status values.
+        - Changed cinside_get_error(), cinside_set_output_function(), and
+          cinside_set_error_function() to macros wrapping cinside_get() and
+          cinside_set().
+
+    - Added manual pages for each libc-inside function.  These manual pages are
+      aliases for the c-inside(3) page.
+
+    - Added support for multi-part string literals, e.g. printf("abc" "def").
+
+    - Modified the $time built-in command to also time the evaluation of the
+      entire expression.
+
+    - Fixed a bug where '\0' was not parsed as a valid character literal.
+
+    - Added the support/ subdirectory to contain supporting files for the
+      configure script.
+
+    - Fixed a bug where a parameter was missing in a call to fprintf() in
+      utilities/c-inside.c.
+
+    - Minor documentation updates and changes.
+
+
+2008/10/07: C-Inside 1.0
+    Initial release.

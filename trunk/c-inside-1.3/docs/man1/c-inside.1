@@ -1,0 +1,425 @@
+.\" AUTHOR: Jason Todd
+.\" Copyright (C) 2008-2015 Jason Todd <jtodd1@earthlink.net>
+.\"
+.\" This is free documentation; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License as
+.\" published by the Free Software Foundation; either version 3 of
+.\" the License, or (at your option) any later version.
+.\"
+.\" The GNU General Public License's references to "object code"
+.\" and "executables" are to be interpreted as the output of any
+.\" document formatting or typesetting system, including
+.\" intermediate and printed output.
+.\"
+.\" This manual is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public
+.\" License along with this manual; if not, write to the Free
+.\" Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111,
+.\" USA.
+.TH C-INSIDE 1 "2015-02-11" "C-Inside 1.3"
+.SH NAME
+c-inside \- front-end to the C-Inside (libc-inside) C language interpreter
+.SH SYNOPSIS
+.B c-inside
+[options] [file]
+.SH COPYRIGHT
+C-Inside and libc-inside are Copyright (C) 2008-2015 Jason Todd.  Send bug
+reports and suggestions/patches/etc. to
+.IR jtodd1@earthlink.net .
+.SH DESCRIPTION
+The C-Inside package is an interpreter for the C programming language.  It
+consists primarily of the libc-inside library, documented in the
+.BR c-inside (3)
+manual page, and the c-inside front-end application, documented here.
+.PP
+This manual page also describes the language of C-Inside.  While it is a C
+language interpreter, it also contains numerous advanced features, such as
+function call execution timing, memory hex-dump and modification, and full
+.B errno
+support, all of which are available via built-in commands.
+.SH OPTIONS
+If
+.B c-inside
+is run with no arguments, it will start in interactive mode, reading commands
+from standard input.  If, however, input is redirected or piped from another
+source, or
+.I file
+is provided on the command line, the prompt ('; ') will be suppressed and
+commands will be read from the given file or pipe.  Execution in all above
+cases will continue until either the
+.B $exit
+built-in command is issued, end-of-file occurs, or the interpreted code
+directly exits (via
+.BR exit (),
+for example).
+.PP
+Additionally, the following options are supported by
+.BR c-inside :
+.PP
+.PD 0
+.TP 11
+.BI \-c "\| string\^"
+c-inside will execute the statement(s) given in
+.IR string .
+The statement(s) will likely need to be quoted, depending on the shell being
+used.
+.TP
+.B \-h, --help
+A brief summary of usage information will be displayed and c-inside will exit.
+.TP
+.B --version
+c-inside will display its version and the version of libc-inside being used,
+and will then exit.
+.PD
+.SH LANGUAGE
+The C-Inside package supports a large subset of the C programming language,
+including, but not limited to, the following features:
+.PP
+.PD 0
+.IP * 3
+integer, character, and string constants
+.IP *
+variables: global and local (see
+.BR VARIABLES ,
+below)
+.IP *
+arrays (of 32-bit types only)
+.IP *
+function calls
+.IP *
+all C language operators, except
+.BR sizeof ()
+and type-casting (see the
+.BR operator (7)
+manual page for a complete list)
+.IP *
+parenthesized sub-expressions
+.IP *
+comments: /*...*/ and //...
+.IP *
+many control-related constructs:
+.BR if ", " else ", " for ", " while ", " do ", " break ", and " continue
+.IP *
+statement blocks: {...}
+.PD
+.PP
+In addition, C-Inside supports advanced features that are accessible through a
+set of built-in commands, documented below.
+.PP
+At this time, many features are not yet implemented in C-Inside, but will be in
+future releases.  The following features, listed in no particular order, are
+currently not supported:
+.PP
+.PD 0
+.IP * 3
+data types (see
+.BR VARIABLES ,
+below), and therefore:
+.BR int ", " char ", " short ", " long ", " double ", " float ", " signed ", " unsigned ", " const ", " static ", " auto ", " struct ", " union ", " enum ", " void ", " extern ", " register ", " typedef ,
+and type-casting
+.IP *
+forward declarations of variables (see
+.BR VARIABLES ,
+below)
+.IP *
+function prototypes
+.IP *
+function declarations
+.IP *
+a few control-related constructs: labels,
+.BR switch ", " case ", " default ", " return ", and " goto
+.IP *
+preprocessor directives
+.RB ( #include ", " #define ", " #if ", " #ifdef ,
+etc.)
+.IP *
+certain non-ANSI language extensions
+.RB ( inline ", " asm ,
+etc.)
+.PD
+.PP
+.SH VARIABLES
+In C-Inside, all data are treated internally as unsigned 32-bit values.  Thus,
+all variables are implicitly defined as
+.BR "unsigned int" .
+However, as defined in the C language, negative integer constants are
+recognized, but they are still stored as unsigned values.
+.PP
+This means that, until support for explicit types is added to C-Inside,
+comparisons such as (a >= 0) will always evaluate to true and comparisons such
+as (a < 0) will always evaluate to false.
+.PP
+Furthermore, it is important to note that functions called from within C-Inside
+will still operate on the data as they normally would.  For instance, if the
+value
+.I 0xFFFFFFFF
+is passed in a
+.B signed int
+(or simply
+.BR int )
+parameter to a function, the function will still operate on the value as a
+signed parameter, as if
+.I \-1
+was passed.
+.PP
+Variables are made known to C-Inside through pre-definition at initialization
+(see
+.BR c-inside (3)),
+namespace lookup (if available), and assignment to new local variables.  In
+other words, resolution of a variable's name first involves checking the list
+of known variables (which can be pre-determined when libc-inside is
+initialized).  If the variable was not found, C-Inside then searches the global
+namespace, and if found, will make the variable known as a global variable.  If
+the variable is still not found, and the expression being evaluated is an
+assignment (via the
+.B =
+operator), a new local variable will be created.
+.PP
+Note, all variables can be treated as arrays in C-Inside.  In other words, if
+for example there is a global integer variable
+.IR iterations ,
+the (possibly unnamed) integer following
+.I iterations
+in memory can be accessed as
+.IR iterations[1] .
+Array notation in C-Inside is best suited for lists (see below).
+.SH LISTS
+Expressions in C-Inside can make use of list literals, the concept of which is
+a minor C-Inside extension to the C language.  Lists are specified in the same
+manner as the right-hand side of a static array initialization.  The result of
+a list expression is the address of the specified list of 32-bit values.
+.PP
+List values can be accessed via array indexing.  After a list is created,
+individual elements can be re-assigned or retrieved as with a standard array in
+C.
+.PP
+For example, a local variable can be created with space for two values, passed
+to
+.BR gettimeofday ()
+(assuming the
+.IR tv_sec " and " tv_usec
+members of
+.B struct timeval
+are 32-bit values), and subsequently displayed, with the following sequence of
+commands:
+.sp
+.in +4n
+.nf
+tv = {0, 0};
+gettimeofday(tv, 0);
+printf("%u.%06u seconds since 1/1/1970\\n", tv[0], tv[1]);
+.fi
+.in
+.sp
+Lists can also be created via the
+.B $list
+built-in command, and can be displayed in their entirety via
+.B $show
+built-in command (see below).
+.SH BUILT-IN COMMANDS
+The following commands are available in libc-inside:
+.TP 9
+.B $clear
+all | functions | vars
+.br
+Remove all known variables or all known functions, or if "all" is specified,
+remove all entered strings and lists in addition to the variables and
+functions.
+.TP
+.B $count
+.I iter
+.br
+Return the number of items in
+.I iter
+(see
+.B $files
+and
+.B $words
+for information on
+.IR iter ).
+.TP
+.B $dump
+.IR addr [, " count" [, " size" ]]
+.br
+Hex-dump data starting at 
+.IR addr , " count"
+values of
+.I size
+bytes
+.RI ( size
+can be 1, 2, or 4; default
+.I count
+is 128 and default
+.I size
+is 1).
+.TP
+.B $errno
+[quiet]
+.br
+Return the
+.B errno
+value from the last function call (see
+.BR errno (3)).
+The corresponding message is also displayed, unless
+.B quiet
+is supplied.
+.TP
+.B $exit
+Exit from the C-Inside environment.
+.TP
+.B $files
+.IR spec "[, " spec ...]
+.br
+Create and return an iterator containing all file names that match the given
+.IR spec (s).
+The return value can be treated as a string, initially containing the first
+match (or empty string if no matches).  See also
+.B $next
+and
+.B $last
+.TP
+.B $get
+.RI [ id ]
+.br
+Return the value of the named configuration item
+.IR id .
+If no name is given, all configuration items are displayed.  Valid names are:
+.BR version ", " error ", " output_func ", " error_func ", " input_done ", and " add_semi
+(see
+.BR c-inside (3)
+for information on configuration items).
+.TP
+.B $help
+Display on-line help.
+.TP
+.B $last
+.I iter
+.br
+Returns non-zero (and frees the iterator) if the last item in
+.I iter
+has already been obtained via
+.B $next
+(or
+.BR $count ,
+if the iterator only had 0 or 1 items).
+.TP
+.B $license
+[copying | warranty]
+.br
+Display license information.  If no arguments are given, the entire license is
+displayed.  If "copying" is given, the relevant redistribution sections of the
+license are shown.  If "warranty" is given, warranty related sections of the
+license are displayed.
+.TP
+.B $list
+.IR count [, " val" ]
+.br
+Create a new list, 
+.I count
+items, optionally with value
+.I val
+(default zero).  This built-in command evaluates to the address of the newly
+created list, so it can be used within expressions (e.g. "vals = $list...").
+.TP
+.B $load
+.I module
+.br
+Load the external module
+.IR mod .
+.TP
+.B $mod
+.IR addr ", " val "[, " size ]
+.br
+Modify data at
+.IR addr " to " val " of " size " bytes (" size
+can be 1, 2, or 4).
+.TP
+.B $next
+.I iter
+.br
+Advances
+.I iter
+to the next item (see
+.B $files
+and
+.BR $words ).
+.TP
+.B $set
+.IR id ", " val
+.br
+Set the named configuration item
+.I id
+to
+.IR val .
+Valid names are:
+.BR output_func ", " error_func ", " input_done ", and " add_semi
+(see
+.BR c-inside (3)
+for information on configuration items).
+.TP
+.B $show
+all | functions | variables | strings | vars
+.br
+Display all known functions, variables, or strings, or all of the above if
+.B all
+is given.  When displaying variables, C-Inside will identify whether the
+variable is a global or a local.  If it is a local, and is a list, the full
+contents of the list will be displayed.  If the variable is a global, C-Inside
+will examine its data in an attempt to better describe the variable.
+.TP
+.B $time
+.I statement
+.br
+Display the execution time of each function in
+.IR statement .
+If the return values of some function(s) are used directly as parameters for
+other functions, each call will be separately timed and displayed.
+.TP
+.B $unset
+.I var
+.br
+Remove the known variable
+.IR var .
+.TP
+.B $version
+Display libc-inside version information.
+.TP
+.B $words
+.IR string "[, " ifs ]
+.br
+Create and return an iterator containing all words in
+.IR string ,
+using characters from the string
+.I ifs
+(if provided) as word separators.  The default separators are space, tab, and
+newline.  The return value can be treated as a string, initially containing the
+first word (or empty string if no words).  See also
+.B $next
+and
+.BR $last .
+.PP
+Note, built-in commands can alternatively be prefixed with '/' instead of '$'.
+.SH EXIT STATUS
+.B c-inside
+will exit with status zero
+.RB ( CINSIDE_SUCCESS )
+on success, or with its status equal to one of the other libc-inside return
+values, which are documented in
+.BR c-inside (3),
+on error.
+.PP
+Note, if the result of an expression is needed, for instance, from within a
+shell script, it can be obtained fairly easily by wrapping a call to
+.BR printf ()
+or
+.BR fprintf ()
+around the expression to be evaluated.
+.SH SEE ALSO
+Examples in the
+.I examples/
+subdirectory within the C-Inside source distribution,
+.BR c-inside "(3), " errno "(3), " operator (7)

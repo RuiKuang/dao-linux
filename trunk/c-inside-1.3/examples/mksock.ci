@@ -1,0 +1,66 @@
+#!/usr/local/bin/c-inside
+
+/* mksock.ci - create a Unix socket file (similar to the "mksock" utility) */
+
+/*
+ * Certain hardcoded values were determined from glibc headers on a Linux
+ * system.  In particular,
+ *      - struct sockaddr_un information: <sys/un.h> and <bits/sockaddr.h>
+ *      - PF_UNIX value: <linux/socket.h>
+ *      - SOCK_STREAM value: <asm/socket.h>
+ * Thus, it is only guaranteed to work correctly on systems with matching
+ * definitions.  It has been successfully tested on Mac OS X.
+ *
+ * Future versions of C-Inside will support additional language features such
+ * as directives (#include, #define, etc.), structs, and typedefs, all of which
+ * will allow the above information to be dynamically determined as it should
+ * be.
+ */
+
+if (argc != 2)
+{
+    printf("Usage: %s <socket-file-name>\n", argv[0]);
+    $exit;
+}
+
+/* struct sockaddr_un sa; */
+if ((sa = malloc(110)) == 0)
+{
+    $errno;
+    printf("Could not allocate socket address structure\n");
+    $exit;
+}
+
+/* fd = socket(PF_UNIX, SOCK_STREAM, 0); */
+if ((fd = socket(1, 1, 0)) == -1)
+{
+    $errno;
+    printf("Could not create socket\n");
+    $exit;
+}
+
+/* memset(&sa, 0, sizeof(sa)) */
+memset(sa, 0, 110);
+
+/* sa.sun_family = AF_UNIX */
+$mod sa, 1, 2;
+
+/* strcpy(sa.sun_path, argv[1]) */
+strcpy(sa + 2, argv[1]);
+
+/* debug */
+/* $dump sa, 110; */
+
+/* bind(fd, (struct sockaddr *)&sa, sizeof(sa)); */
+if (bind(fd, sa, 110) == -1)
+{
+    $errno;
+    printf("Could not bind socket\n");
+    $exit;
+}
+
+/* close(fd); */
+close(fd);
+
+free(sa);
+$exit;

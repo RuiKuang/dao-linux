@@ -1,0 +1,31 @@
+This file documents the examples provided with C-Inside, in the examples/
+subdirectory.  These are just a few of the very simple, but interesting things
+that can be done with C-Inside.  Additional examples will be provided in later
+versions, and suggestions are always welcome.
+
+Files with ".sh" extension are meant to be executables, interpreted by Bash.
+You can simply run them, as in "./result.sh".
+
+Files with ".ci" extension are meant to be interpreted by an installed copy of
+c-inside.  If the c-inside binary is installed in /usr/local/bin/, then you can
+simply run these files as well, as in "./errno.ci" or "./ls.ci *.sh".
+Otherwise, you can run c-inside and supply the file name as the first argument,
+for example: "c-inside errno.ci" or "c-inside ls.ci *.sh".
+
+
+date.ci         display the current time and date
+
+errno.ci        demonstrate the $errno built-in command
+
+ls.ci           simple version of the "ls" command
+
+mksock.ci       create a Unix socket file (similar to the "mksock" utility)
+
+pwd.ci          emulate the "pwd" command, as a "one-liner"
+
+result.sh       demonstrate various ways of obtaining the result of C-Inside
+                command evaluation from within a shell script - examine the
+                code in this script, it won't look too useful if you simply run
+                it
+
+timing.ci       demonstrate timing of functions

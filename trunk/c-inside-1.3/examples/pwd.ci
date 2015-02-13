@@ -1,0 +1,5 @@
+#!/usr/local/bin/c-inside
+
+/* pwd.ci - emulate the "pwd" command-line utility, as a "one-liner" */
+
+printf("%s\n", getcwd((buf = malloc(1024)), 1023)); free(buf);

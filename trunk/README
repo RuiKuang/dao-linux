@@ -1,0 +1,45 @@
+This is the README file for linja 0.9.
+linja is Copyright (C) 2009-2015 Caesar Creek Software, Inc.
+<http://www.cc-sw.com>
+
+
+Brief Description
+linja is a stealthy user-mode debugger for Linux systems.  Written from the
+ground up to remain invisible to its targets, linja provides the same insight,
+control, and extensibility expected of a good debugger.
+
+
+Important
+Currently, linja only supports 32-bit x86 systems running Linux.  Support
+for other architectures and platforms will be made available in future
+versions.
+
+
+Requirements
+linja requires the following additional software components:
+
+c-inside 1.3
+    - included in c-inside-1.3/ subdirectory
+    - also available from http://www.sourceforge.net/projects/c-inside/
+    - configure and build, but DO NOT INSTALL
+
+Udis86 1.7
+    - not included
+    - available from http://www.sourceforge.net/projects/udis86/
+    - extract into udis86-1.7/ subdirectory
+    - configure and build, but DO NOT INSTALL
+    - versions newer than 1.7 (such as 1.7.1, etc.) have not been tested
+
+
+Installation
+First, as mentioned above, extract Udis86 1.7 into the udis86-1.7/
+subdirectory.  From within the c-inside-1.3/ and udis86-1.7/ directories, run
+"./configure" and "make".  Do not, however, install these components.  They are
+referenced in-place by the linja Makefile.
+
+After the prerequisite libraries have been built, simply run "make" from within
+the linja/ subdirectory.  This will build the linja executable in that
+directory, and the example test programs in the examples/ directory.
+
+Run linja by specifying a program as its only command line argument.
+Example: "linja/linja examples/ptrace"
